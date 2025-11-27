@@ -1,0 +1,121 @@
+# PhotoResizer4K Project - Automatic Photo Resizing to 4K
+
+## Overview
+C# console application for macOS that intelligently resizes photos to 4K (3840x2160) with automatic cropping and HEIC support.
+
+## Project Structure
+```
+PhotoResizer4K/
+├── PhotoResizer4K.csproj
+├── Program.cs
+├── README.md
+└── .clinerules
+```
+
+## Technologies
+- .NET 8.0
+- Magick.NET-Q16-AnyCPU (ImageMagick for C#)
+- Target: macOS (Intel and Apple Silicon)
+
+## Development Rules
+
+### Architecture
+- Simple and efficient console application
+- Batch file processing
+- Intelligent crop based on pixel variance analysis
+- No graphical interface (CLI only)
+
+### Code Standards
+- Use `using` statements for image memory management
+- Prefer constants for dimensions (targetWidth, targetHeight)
+- Error handling with try-catch per file (don't stop entire processing)
+- Console logs with emojis for readability (✅ ❌ 🎉)
+
+### Supported Formats
+- Input: JPEG, PNG, HEIC, HEIF, BMP, TIFF, CR2, NEF, ARW
+- Output: JPEG only (92% quality, progressive)
+
+### Crop Algorithm
+1. Determine if the image is wider or taller than 16:9 ratio
+2. For horizontal crop: analyze by sampling (20 positions) and choose the area with the highest variance (= more details)
+3. For vertical crop: favor the upper third (face area in portraits)
+4. Apply crop, then resize with Lanczos filter
+5. Apply light unsharp mask (0.5)
+
+### Metadata
+- Always apply `AutoOrient()` to respect EXIF orientation
+- Preserve basic EXIF metadata
+- Remove ICC profiles and thumbnails to reduce file size
+
+### Performance
+- Process files sequentially (no parallelism to avoid memory overload)
+- Immediately release memory with `using` statements
+- No cache, each image is processed independently
+
+### Naming Conventions
+- Output files: `{original_name}_4K.jpg`
+- Variables: camelCase for local variables, PascalCase for methods
+- Constants: PascalCase with prefix (targetWidth, targetHeight)
+
+### macOS Path Handling
+- Support `~/` notation for home directory
+- Use `Path.Combine()` for compatibility
+- Automatically create output folder if it doesn't exist
+
+### User Messages
+- Help message if arguments are missing
+- Display each processed file with status
+- Final summary with counters (success/errors)
+- Explicit error messages with filename
+
+### Recommended Tests
+- Test with landscape images (ratio > 16:9)
+- Test with portrait images (ratio < 16:9)
+- Test with iPhone HEIC files
+- Test with images already in 16:9 (no crop needed)
+- Verify EXIF orientation (rotated images)
+
+## Useful Commands
+
+### Development
+```bash
+dotnet run ~/Pictures/Input ~/Pictures/Output
+```
+
+### Release Build
+```bash
+# Apple Silicon
+dotnet publish -c Release -r osx-arm64 --self-contained true -p:PublishSingleFile=true
+
+# Intel
+dotnet publish -c Release -r osx-x64 --self-contained true -p:PublishSingleFile=true
+```
+
+### System Dependencies Installation
+```bash
+brew install dotnet-sdk imagemagick
+```
+
+## Possible Future Improvements
+- [ ] Recursive folder support (-r flag)
+- [ ] Target resolution choice (2K, 4K, 8K)
+- [ ] Face detection for even smarter cropping
+- [ ] Preview mode (show crop without saving)
+- [ ] Parallel processing with memory limitation
+- [ ] Multiple output format support (PNG, WebP)
+- [ ] Folder structure preservation
+- [ ] Progress bar for large batches
+- [ ] Configuration via JSON file
+- [ ] Interactive mode to validate each crop
+
+## Known Limitations
+- No parallel processing (deliberate choice to limit memory usage)
+- Basic intelligent crop (variance only, no object/face detection)
+- JPEG output only
+- No preview before processing
+
+## Important Notes
+- ImageMagick must be installed via Homebrew for HEIC support
+- JPEG quality at 92% offers a good size/quality compromise
+- Lanczos filter is best for downscaling
+- Pixel variance is a simple but effective method for detecting interesting areas

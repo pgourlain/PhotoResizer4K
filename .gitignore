@@ -1,0 +1,12 @@
+obj
+bin
+*.csproj.user
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+.vs
+*.log
+*.tlog
+*.lastbuildstate
+.vscode
